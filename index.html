@@ -2,7 +2,7 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8">
-    <title>AR.js - Meu Modelo 3D no Marker</title>
+    <title>AR.js - Meu Modelo 3D no Hiro Marker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Scripts essenciais -->
     <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.6.0/dist/aframe-master.min.js"></script>
@@ -35,11 +35,11 @@
     <!-- Loader enquanto inicia AR.js -->
     <div class="arjs-loader"><div>Carregando AR, aguarde...</div></div>
     <a-scene 
-      embedded 
+      embedded
       arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
       <a-marker preset="hiro">
         <a-entity
-          gltf-model="modelos/logo.glb"
+          gltf-model="logo.glb"
           scale="0.1 0.1 0.1"
           position="0 0 0"
         ></a-entity>
