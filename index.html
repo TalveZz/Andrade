@@ -1,50 +1,67 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8">
-    <title>AR.js - Meu Modelo 3D no Hiro Marker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Scripts essenciais -->
-    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.6.0/dist/aframe-master.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        background: #222;
-      }
-      .arjs-loader {
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: rgba(0,0,0,0.8);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .arjs-loader div {
-        color: white;
-        font-size: 1.5em;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Loader enquanto inicia AR.js -->
-    <div class="arjs-loader"><div>Carregando AR, aguarde...</div></div>
-    <a-scene 
-      embedded
-      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
-      <a-marker preset="hiro">
-        <a-entity
-          gltf-model="logo.glb"
-          scale="0.1 0.1 0.1"
-          position="0 0 0"
-        ></a-entity>
-      </a-marker>
-      <a-entity camera></a-entity>
-    </a-scene>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IFRJ AR</title>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    body{margin:0;overflow:hidden;background:#111}
+    .loader{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;background:#000a;font:16px/1.4 system-ui}
+    .tip{position:fixed;left:8px;bottom:8px;color:#fff;background:#000c;padding:8px 10px;border-radius:6px;font:12px/1.4 system-ui}
+    .err{position:fixed;right:8px;bottom:8px;color:#fff;background:#b00020;padding:8px 10px;border-radius:6px;font:12px/1.4 system-ui;display:none}
+  </style>
+</head>
+<body>
+  <div class="loader" id="loader">Carregando AR... permita a câmera.</div>
+  <div class="tip">Aponte para o marcador Hiro para testar. Depois troque para seu marker.</div>
+  <div class="err" id="err"></div>
+
+  <a-scene
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+    renderer="antialias:true;alpha:true;powerPreference:high-performance"
+    vr-mode-ui="enabled:false"
+    loading-screen="enabled:false">
+
+    <!-- TESTE RÁPIDO: marcador Hiro -->
+    <a-marker preset="hiro">
+      <!-- TROQUE a URL abaixo pelo caminho do seu arquivo .glb no GitHub Pages, por ex: modelos/logo.glb -->
+      <a-entity id="model"
+        gltf-model="https://raw.githubusercontent.com/AR-js-org/AR.js/master/aframe/examples/model/model.glb"
+        position="0 0 0"
+        rotation="0 0 0"
+        scale="0.3 0.3 0.3">
+      </a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // Esconde loader quando o AR.js inicializar a fonte de vídeo
+    const loader = document.getElementById('loader');
+    const errBox = document.getElementById('err');
+    document.querySelector('a-scene').addEventListener('arReady', () => {
+      loader.style.display = 'none';
+    });
+    document.querySelector('a-scene').addEventListener('arError', (e) => {
+      errBox.textContent = 'Erro ao iniciar AR (câmera/bloqueio HTTPS).';
+      errBox.style.display = 'block';
+    });
+
+    // Loga erro se o modelo não carregar
+    const model = document.getElementById('model');
+    model.addEventListener('model-error', (e) => {
+      errBox.textContent = 'Falha ao carregar modelo: verifique a URL e o tamanho do .glb.';
+      errBox.style.display = 'block';
+    });
+    model.addEventListener('model-loaded', () => {
+      // opcional: ajustar escala automática
+      // const box = new THREE.Box3().setFromObject(model.getObject3D('mesh'));
+      // const size = new THREE.Vector3(); box.getSize(size);
+    });
+  </script>
+</body>
 </html>
