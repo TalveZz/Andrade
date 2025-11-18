@@ -17,9 +17,16 @@
   </head>
   <body style="margin:0; overflow:hidden; background:#000;">
     <a-scene embedded arjs stats>
+      <!-- Marcador original -->
       <a-marker type="pattern" url="arc.patt">
         <a-entity gltf-model="logo.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
       </a-marker>
+      
+      <!-- Novo marcador para wev.patt -->
+      <a-marker type="pattern" url="wev.patt">
+        <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
+      </a-marker>
+      
       <a-entity camera></a-entity>
     </a-scene>
     <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
