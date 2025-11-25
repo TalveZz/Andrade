@@ -27,10 +27,10 @@
         <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
       </a-marker>
 
-      <!-- Modelo usando GPS -->
+      <!-- Modelo usando GPS com offset de ~10cm ao norte -->
       <a-entity
-        gps-entity-place="latitude: -22.8930606; longitude: -43.0532290;"
-        gltf-model="swing.glb"
+        gps-entity-place="latitude: -22.8935930; longitude: -43.0532800;"
+        gltf-model="logo.glb"
         scale="0.1 0.1 0.1">
       </a-entity>
 
@@ -44,13 +44,7 @@
         if (el.requestFullscreen) el.requestFullscreen();
         else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-        else if (el.msRequestFullscreen) el.msRequestFullscreen();
-      }
-    </script>
-  </body>
-</html>        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+        else if (el.msRequestFullscreen) el.msRequestFullScreen();
       }
     </script>
   </body>
