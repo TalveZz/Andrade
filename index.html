@@ -1,153 +1,99 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AR.js Troca de Câmera com Zoom</title>
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  <style>
-    #fullscreenBtn,
-    #cameraSwitcher,
-    #zoomSlider {
-      font-size: 22px !important;
-      padding: 14px 20px !important;
-      border-radius: 10px !important;
-      background: #222;
-      color: white;
-      opacity: 0.9;
-      border: none;
-      user-select: none;
-      z-index: 101;
-      position: fixed;
-      right: 15px;
-    }
-    #fullscreenBtn { bottom: 15px; }
-    #cameraSwitcher { bottom: 70px; width: 140px; }
-    #zoomSlider { bottom: 120px; width: 140px; }
-
-    @media (max-width: 600px) {
-      #fullscreenBtn,
-      #cameraSwitcher,
-      #zoomSlider {
-        width: 90vw;
-        right: 5vw;
-        font-size: 26px !important;
-        padding: 18px;
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>AR IFRJ GESTÃO TI - Câmera Principal</title>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      #fullscreenBtn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        background: #222;
+        color: #fff;
+        border: none;
+        font-size: 18px;
+        opacity: 0.8;
+        z-index: 100;
       }
-      #cameraSwitcher { bottom: 90px; }
-      #zoomSlider { bottom: 150px; }
-    }
-  </style>
-</head>
-<body style="margin:0; overflow:hidden; background:#000;">
-  <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
-  <button id="cameraSwitcher" disabled>Trocar Câmera</button>
-  <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" disabled />
+    </style>
+  </head>
+  <body style="margin: 0; overflow: hidden; background: #000;">
+    <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
 
-  <a-scene embedded stats vr-mode-ui="enabled: false" id="arScene" arjs="sourceType: webcam">
-    <a-marker type="pattern" url="arc.patt">
-      <a-entity gltf-model="logo.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
-    </a-marker>
+    <a-scene embedded stats vr-mode-ui="enabled: false" id="arScene">
+      <!-- Marcador original -->
+      <a-marker
+        type="pattern"
+        url="arc.patt"
+      >
+        <a-entity
+          gltf-model="logo.glb"
+          position="0 0 0"
+          scale="0.08 0.08 0.08"
+        ></a-entity>
+      </a-marker>
 
-    <a-marker type="pattern" url="wev.patt">
-      <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
-    </a-marker>
+      <!-- Novo marcador para wev.patt -->
+      <a-marker
+        type="pattern"
+        url="wev.patt"
+      >
+        <a-entity
+          gltf-model="modelwev.glb"
+          position="0 0 0"
+          scale="0.08 0.08 0.08"
+        ></a-entity>
+      </a-marker>
 
-    <a-entity camera></a-entity>
-  </a-scene>
+      <a-entity camera></a-entity>
+    </a-scene>
 
-  <script>
-    let videoDevices = [];
-    let currentDeviceIndex = 0;
-    let currentStream = null;
-
-    const switcherBtn = document.getElementById("cameraSwitcher");
-    const zoomSlider = document.getElementById("zoomSlider");
-    const sceneEl = document.querySelector("#arScene");
-
-    function launchFullscreen() {
-      const el = document.querySelector("a-scene");
-      if (el.requestFullscreen) el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-      else if (el.msRequestFullscreen) el.msRequestFullscreen();
-    }
-
-    // Função para parar a stream atual
-    function stopCurrentStream() {
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-        currentStream = null;
+    <script>
+      // Função para executar fullscreen no canvas AR
+      function launchFullscreen() {
+        const el = document.querySelector("a-scene");
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
       }
-    }
 
-    // Função para iniciar a câmera com zoom e deviceId
-    async function startCamera(deviceId, zoomVal = 1) {
-      stopCurrentStream();
+      // Função para inicializar AR.js com a câmera principal
+      async function initARWithMainCamera() {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(
+          (device) => device.kind === "videoinput"
+        );
 
-      try {
-        const constraints = { video: { deviceId: { exact: deviceId } }, audio: false };
-        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Assumindo que a última câmera da lista é a traseira (câmera principal)
+        const mainCamera = videoDevices[videoDevices.length - 1];
 
-        const videoTrack = currentStream.getVideoTracks()[0];
-        const capabilities = videoTrack.getCapabilities();
-
-        if (capabilities.zoom) {
-          const zoomConstraint =
-            zoomVal >= capabilities.min && zoomVal <= capabilities.max
-              ? { zoom: zoomVal }
-              : { zoom: capabilities.min };
-          await videoTrack.applyConstraints(zoomConstraint);
-        }
-
-        // Atualiza os atributos do arjs para usar nova câmera
+        // Configure o arjs para usar o deviceId da câmera principal
+        const sceneEl = document.querySelector("#arScene");
         sceneEl.setAttribute("arjs", {
           sourceType: "webcam",
-          sourceId: deviceId,
-          // força refresh forçando recarregar o feed
-          debugUIEnabled: false,
+          sourceId: mainCamera.deviceId,
         });
 
-        console.log(`Câmera ativada: ${deviceId} com zoom: ${zoomVal}`);
-      } catch (e) {
-        console.error("Erro ao iniciar câmera:", e);
-      }
-    }
-
-    async function init() {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      videoDevices = devices.filter(d => d.kind === "videoinput");
-
-      if (videoDevices.length === 0) {
-        alert("Nenhuma câmera detectada.");
-        return;
+        console.log("Câmera principal selecionada:", mainCamera.label);
       }
 
-      switcherBtn.disabled = false;
-      zoomSlider.disabled = false;
-
-      // Começar com câmera principal (última)
-      currentDeviceIndex = videoDevices.length - 1;
-      await startCamera(videoDevices[currentDeviceIndex].deviceId);
-
-      switcherBtn.onclick = async () => {
-        currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-        await startCamera(videoDevices[currentDeviceIndex].deviceId, parseFloat(zoomSlider.value));
-      };
-
-      zoomSlider.oninput = async e => {
-        await startCamera(videoDevices[currentDeviceIndex].deviceId, parseFloat(e.target.value));
-      };
-    }
-
-    window.addEventListener("load", () => {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("Seu navegador não suporta as APIs necessárias para trocar de câmera e controlar zoom.");
-        return;
-      }
-      init();
-    });
-  </script>
-</body>
+      // Ao carregar a página, inicialize com a câmera principal
+      window.addEventListener("load", () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+          alert("Seu navegador não suporta seleções de dispositivos de vídeo.");
+          return;
+        }
+        initARWithMainCamera();
+      });
+    </script>
+  </body>
 </html>
