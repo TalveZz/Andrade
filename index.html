@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR IFRJ GESTÂO TI</title>
+    <title>AR IFRJ GESTÃO TI - GPS AR</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
@@ -22,19 +22,40 @@
         <a-entity gltf-model="logo.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
       </a-marker>
       
-      <!-- Novo marcador para wev.patt -->
+      <!-- Outro marcador opcional -->
       <a-marker type="pattern" url="wev.patt">
         <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
       </a-marker>
 
-      <!-- Modelo glb por GPS ~10cm ao norte -->
+      <!-- Cubo vermelho visível apenas até 10m da posição GPS -->
       <a-entity
-        gps-entity-place="latitude: -22.8935930; longitude: -43.0532800;"
+        gps-entity-place="latitude: -22.8935940; longitude: -43.0532800; minDistance: 0; maxDistance: 10;"
+        geometry="primitive: box"
+        material="color: red"
+        scale="1 1 1">
+      </a-entity>
+
+      <!-- Modelo GLB do logo visível também -->
+      <a-entity
+        gps-entity-place="latitude: -22.8935930; longitude: -43.0532800; minDistance: 0; maxDistance: 10;"
         gltf-model="logo.glb"
         scale="0.1 0.1 0.1">
       </a-entity>
-      
-      <!-- Cubo vermelho por GPS exato -->
+
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+    <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
+    <script>
+      function launchFullscreen() {
+        var el = document.querySelector('a-scene');
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+        else if (el.msRequestFullscreen) el.msRequestFullScreen();
+      }
+    </script>
+  </body>
+</html>      <!-- Cubo vermelho por GPS exato -->
       <a-entity
         gps-entity-place="latitude: -22.8935940; longitude: -43.0532800;"
         geometry="primitive: box"
