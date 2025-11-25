@@ -6,40 +6,57 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
-    <title>AR IFRJ GESTÃO TI - Zoom e Troca Câmera</title>
+    <title>AR IFRJ GESTÃO TI - Zoom e Troca Câmera Mobile</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-      #fullscreenBtn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 18px;
-        border-radius: 8px;
+      #fullscreenBtn,
+      #cameraSwitcher,
+      #zoomSlider {
+        font-size: 22px !important;
+        padding: 14px 20px !important;
+        border-radius: 10px !important;
         background: #222;
-        color: #fff;
+        color: white;
+        opacity: 0.9;
         border: none;
-        font-size: 18px;
-        opacity: 0.8;
-        z-index: 100;
+        user-select: none;
+        z-index: 101;
+        position: fixed;
+        right: 15px;
       }
 
-      #cameraSwitcher, #zoomSlider {
-        position: fixed;
+      #fullscreenBtn {
+        bottom: 15px;
+      }
+
+      #cameraSwitcher {
         bottom: 70px;
-        right: 20px;
-        background: #222;
-        color: #fff;
-        padding: 8px 12px;
-        border-radius: 8px;
-        opacity: 0.8;
-        font-size: 16px;
-        user-select: none;
+        width: 140px;
       }
 
       #zoomSlider {
-        bottom: 110px;
-        width: 150px;
+        bottom: 120px;
+        width: 140px;
+      }
+
+      @media (max-width: 600px) {
+        #fullscreenBtn,
+        #cameraSwitcher,
+        #zoomSlider {
+          width: 90vw;
+          right: 5vw;
+          font-size: 26px !important;
+          padding: 18px;
+        }
+
+        #cameraSwitcher {
+          bottom: 90px;
+        }
+
+        #zoomSlider {
+          bottom: 150px;
+        }
       }
     </style>
   </head>
@@ -73,11 +90,9 @@
       let currentDeviceIndex = 0;
       let stream = null;
 
-      // Botões e controles
       const switcherBtn = document.getElementById("cameraSwitcher");
       const zoomSlider = document.getElementById("zoomSlider");
 
-      // Função fullscreen
       function launchFullscreen() {
         const el = document.querySelector("a-scene");
         if (el.requestFullscreen) el.requestFullscreen();
@@ -86,47 +101,43 @@
         else if (el.msRequestFullscreen) el.msRequestFullscreen();
       }
 
-      // Atualiza a stream da câmera atual, considerando o zoom
       async function startARWithDevice(deviceId, zoomValue = 1) {
-        // Para stream antiga, pare todas as tracks antes de continuar
         if (stream) {
           stream.getTracks().forEach((track) => track.stop());
         }
 
-        const constraints = {
-          video: {
-            deviceId: { exact: deviceId },
-            zoom: zoomValue, // Muitas câmeras não suportam isso
-          },
-          audio: false,
-        };
-
         try {
+          const constraints = {
+            video: { deviceId: { exact: deviceId } },
+            audio: false,
+          };
+
           stream = await navigator.mediaDevices.getUserMedia(constraints);
-          // Tente aplicar zoom via applyConstraints se possível
+
+          // Aplica zoom se suportado
           const [videoTrack] = stream.getVideoTracks();
-          if (videoTrack.getCapabilities().zoom) {
-            const capabilities = videoTrack.getCapabilities();
-            const constraintsZoom =
+          const capabilities = videoTrack.getCapabilities();
+          if (capabilities.zoom) {
+            const zoomConstraint =
               zoomValue >= capabilities.min && zoomValue <= capabilities.max
                 ? { zoom: zoomValue }
                 : { zoom: capabilities.min };
-            await videoTrack.applyConstraints(constraintsZoom);
+            await videoTrack.applyConstraints(zoomConstraint);
           }
 
-          // Atualiza o AR.js com a nova fonte do stream
-          document
-            .querySelector("#arScene")
-            .setAttribute("arjs", "sourceType: webcam; sourceId: " + deviceId);
+          // Atualiza atributo do arjs para trocar a câmera
+          const sceneEl = document.querySelector("#arScene");
+          sceneEl.setAttribute("arjs", {
+            sourceType: "webcam",
+            sourceId: deviceId,
+          });
 
-          // Isto força AR.js a reiniciar a câmera? Se não, pode ser necessário lógica adicional.
           console.log(`Câmera ativada: ${deviceId} com zoom ${zoomValue}`);
         } catch (e) {
           console.error("Erro ao iniciar câmera:", e);
         }
       }
 
-      // Inicializa a lista de câmeras e configura os controles
       async function init() {
         const devices = await navigator.mediaDevices.enumerateDevices();
         videoDevices = devices.filter((d) => d.kind === "videoinput");
@@ -139,11 +150,10 @@
         switcherBtn.disabled = false;
         zoomSlider.disabled = false;
 
-        // Começa com a câmera principal (última na lista)
+        // Começa com a câmera principal (geralmente a traseira - última da lista)
         currentDeviceIndex = videoDevices.length - 1;
         await startARWithDevice(videoDevices[currentDeviceIndex].deviceId);
 
-        // Evento de troca de câmera
         switcherBtn.onclick = async () => {
           currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
           await startARWithDevice(
@@ -152,10 +162,8 @@
           );
         };
 
-        // Evento de controle de zoom
         zoomSlider.oninput = async (e) => {
           const zoomValue = parseFloat(e.target.value);
-          // Reaplica a mesma câmera atual com zoom atualizado
           await startARWithDevice(videoDevices[currentDeviceIndex].deviceId, zoomValue);
         };
       }
