@@ -22,6 +22,10 @@
         <a-entity gltf-model="logo.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
       </a-marker>
       
+      <!-- Novo marcador para wev.patt -->
+      <a-marker type="pattern" url="wev.patt">
+        <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
+      </a-marker>
       
       <a-entity camera></a-entity>
     </a-scene>
@@ -33,23 +37,6 @@
         else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
         else if (el.msRequestFullscreen) el.msRequestFullscreen();
-      }
-    </script>
-  </body>
-</html>        material="color: red"
-        scale="1 1 1">
-      </a-entity>
-
-      <a-camera gps-camera rotation-reader></a-camera>
-    </a-scene>
-    <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
-    <script>
-      function launchFullscreen() {
-        var el = document.querySelector('a-scene');
-        if (el.requestFullscreen) el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-        else if (el.msRequestFullscreen) el.msRequestFullScreen();
       }
     </script>
   </body>
