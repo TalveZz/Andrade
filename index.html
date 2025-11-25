@@ -1,217 +1,153 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=no"
-    />
-    <title>AR IFRJ GESTÃO TI - Zoom e Troca Câmera Funcional</title>
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <style>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>AR.js Troca de Câmera com Zoom</title>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    #fullscreenBtn,
+    #cameraSwitcher,
+    #zoomSlider {
+      font-size: 22px !important;
+      padding: 14px 20px !important;
+      border-radius: 10px !important;
+      background: #222;
+      color: white;
+      opacity: 0.9;
+      border: none;
+      user-select: none;
+      z-index: 101;
+      position: fixed;
+      right: 15px;
+    }
+    #fullscreenBtn { bottom: 15px; }
+    #cameraSwitcher { bottom: 70px; width: 140px; }
+    #zoomSlider { bottom: 120px; width: 140px; }
+
+    @media (max-width: 600px) {
       #fullscreenBtn,
       #cameraSwitcher,
       #zoomSlider {
-        font-size: 22px !important;
-        padding: 14px 20px !important;
-        border-radius: 10px !important;
-        background: #222;
-        color: white;
-        opacity: 0.9;
-        border: none;
-        user-select: none;
-        z-index: 101;
-        position: fixed;
-        right: 15px;
+        width: 90vw;
+        right: 5vw;
+        font-size: 26px !important;
+        padding: 18px;
       }
+      #cameraSwitcher { bottom: 90px; }
+      #zoomSlider { bottom: 150px; }
+    }
+  </style>
+</head>
+<body style="margin:0; overflow:hidden; background:#000;">
+  <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
+  <button id="cameraSwitcher" disabled>Trocar Câmera</button>
+  <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" disabled />
 
-      #fullscreenBtn {
-        bottom: 15px;
+  <a-scene embedded stats vr-mode-ui="enabled: false" id="arScene" arjs="sourceType: webcam">
+    <a-marker type="pattern" url="arc.patt">
+      <a-entity gltf-model="logo.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
+    </a-marker>
+
+    <a-marker type="pattern" url="wev.patt">
+      <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    let videoDevices = [];
+    let currentDeviceIndex = 0;
+    let currentStream = null;
+
+    const switcherBtn = document.getElementById("cameraSwitcher");
+    const zoomSlider = document.getElementById("zoomSlider");
+    const sceneEl = document.querySelector("#arScene");
+
+    function launchFullscreen() {
+      const el = document.querySelector("a-scene");
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    }
+
+    // Função para parar a stream atual
+    function stopCurrentStream() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
       }
+    }
 
-      #cameraSwitcher {
-        bottom: 70px;
-        width: 140px;
-      }
+    // Função para iniciar a câmera com zoom e deviceId
+    async function startCamera(deviceId, zoomVal = 1) {
+      stopCurrentStream();
 
-      #zoomSlider {
-        bottom: 120px;
-        width: 140px;
-      }
+      try {
+        const constraints = { video: { deviceId: { exact: deviceId } }, audio: false };
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      @media (max-width: 600px) {
-        #fullscreenBtn,
-        #cameraSwitcher,
-        #zoomSlider {
-          width: 90vw;
-          right: 5vw;
-          font-size: 26px !important;
-          padding: 18px;
+        const videoTrack = currentStream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities();
+
+        if (capabilities.zoom) {
+          const zoomConstraint =
+            zoomVal >= capabilities.min && zoomVal <= capabilities.max
+              ? { zoom: zoomVal }
+              : { zoom: capabilities.min };
+          await videoTrack.applyConstraints(zoomConstraint);
         }
 
-        #cameraSwitcher {
-          bottom: 90px;
-        }
+        // Atualiza os atributos do arjs para usar nova câmera
+        sceneEl.setAttribute("arjs", {
+          sourceType: "webcam",
+          sourceId: deviceId,
+          // força refresh forçando recarregar o feed
+          debugUIEnabled: false,
+        });
 
-        #zoomSlider {
-          bottom: 150px;
-        }
+        console.log(`Câmera ativada: ${deviceId} com zoom: ${zoomVal}`);
+      } catch (e) {
+        console.error("Erro ao iniciar câmera:", e);
       }
-    </style>
-  </head>
-  <body style="margin: 0; overflow: hidden; background: #000;">
-    <button id="fullscreenBtn" onclick="launchFullscreen()">Tela cheia</button>
-    <button id="cameraSwitcher" disabled>Trocar Câmera</button>
-    <input
-      type="range"
-      id="zoomSlider"
-      min="1"
-      max="3"
-      step="0.1"
-      value="1"
-      disabled
-    />
+    }
 
-    <div id="sceneContainer">
-      <a-scene
-        embedded
-        stats
-        vr-mode-ui="enabled: false"
-        id="arScene"
-        arjs="sourceType: webcam"
-      >
-        <a-marker type="pattern" url="arc.patt">
-          <a-entity
-            gltf-model="logo.glb"
-            position="0 0 0"
-            scale="0.08 0.08 0.08"
-          ></a-entity>
-        </a-marker>
+    async function init() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      videoDevices = devices.filter(d => d.kind === "videoinput");
 
-        <a-marker type="pattern" url="wev.patt">
-          <a-entity
-            gltf-model="modelwev.glb"
-            position="0 0 0"
-            scale="0.08 0.08 0.08"
-          ></a-entity>
-        </a-marker>
-
-        <a-entity camera></a-entity>
-      </a-scene>
-    </div>
-
-    <script>
-      let videoDevices = [];
-      let currentDeviceIndex = 0;
-      let stream = null;
-
-      const switcherBtn = document.getElementById("cameraSwitcher");
-      const zoomSlider = document.getElementById("zoomSlider");
-      const sceneContainer = document.getElementById("sceneContainer");
-
-      function launchFullscreen() {
-        const el = document.querySelector("a-scene");
-        if (el.requestFullscreen) el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+      if (videoDevices.length === 0) {
+        alert("Nenhuma câmera detectada.");
+        return;
       }
 
-      // Função que reinicia a cena AR.js trocando a câmera
-      async function switchCamera(deviceId, zoomValue = 1) {
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
-        }
+      switcherBtn.disabled = false;
+      zoomSlider.disabled = false;
 
-        // Remove cena AR antiga
-        const oldScene = document.querySelector("#arScene");
-        if (oldScene) {
-          oldScene.remove();
-        }
+      // Começar com câmera principal (última)
+      currentDeviceIndex = videoDevices.length - 1;
+      await startCamera(videoDevices[currentDeviceIndex].deviceId);
 
-        // Cria nova cena AR com nova câmera
-        const newScene = document.createElement("a-scene");
-        newScene.setAttribute("id", "arScene");
-        newScene.setAttribute("embedded", "");
-        newScene.setAttribute("stats", "");
-        newScene.setAttribute("vr-mode-ui", "enabled: false");
-        newScene.setAttribute("arjs", `sourceType: webcam; sourceId: ${deviceId}`);
+      switcherBtn.onclick = async () => {
+        currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+        await startCamera(videoDevices[currentDeviceIndex].deviceId, parseFloat(zoomSlider.value));
+      };
 
-        newScene.innerHTML = `
-          <a-marker type="pattern" url="arc.patt">
-            <a-entity gltf-model="logo.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
-          </a-marker>
-          <a-marker type="pattern" url="wev.patt">
-            <a-entity gltf-model="modelwev.glb" position="0 0 0" scale="0.08 0.08 0.08"></a-entity>
-          </a-marker>
-          <a-entity camera></a-entity>
-        `;
+      zoomSlider.oninput = async e => {
+        await startCamera(videoDevices[currentDeviceIndex].deviceId, parseFloat(e.target.value));
+      };
+    }
 
-        sceneContainer.appendChild(newScene);
-
-        // Obtenha stream para aplicar zoom, se suportado
-        try {
-          const constraints = { video: { deviceId: { exact: deviceId } }, audio: false };
-          stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-          const [videoTrack] = stream.getVideoTracks();
-          const capabilities = videoTrack.getCapabilities();
-          if (capabilities.zoom) {
-            const zoomConstraint =
-              zoomValue >= capabilities.min && zoomValue <= capabilities.max
-                ? { zoom: zoomValue }
-                : { zoom: capabilities.min };
-            await videoTrack.applyConstraints(zoomConstraint);
-          }
-        } catch (e) {
-          console.error("Erro ao aplicar zoom na câmera:", e);
-        }
+    window.addEventListener("load", () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Seu navegador não suporta as APIs necessárias para trocar de câmera e controlar zoom.");
+        return;
       }
-
-      async function init() {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        videoDevices = devices.filter((d) => d.kind === "videoinput");
-
-        if (videoDevices.length === 0) {
-          alert("Nenhuma câmera detectada.");
-          return;
-        }
-
-        switcherBtn.disabled = false;
-        zoomSlider.disabled = false;
-
-        // Começar com a câmera principal (última da lista)
-        currentDeviceIndex = videoDevices.length - 1;
-        await switchCamera(videoDevices[currentDeviceIndex].deviceId);
-
-        switcherBtn.onclick = async () => {
-          currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-          await switchCamera(
-            videoDevices[currentDeviceIndex].deviceId,
-            parseFloat(zoomSlider.value)
-          );
-        };
-
-        zoomSlider.oninput = async (e) => {
-          const zoomValue = parseFloat(e.target.value);
-          await switchCamera(videoDevices[currentDeviceIndex].deviceId, zoomValue);
-        };
-      }
-
-      window.addEventListener("load", () => {
-        if (
-          !navigator.mediaDevices ||
-          !navigator.mediaDevices.enumerateDevices ||
-          !navigator.mediaDevices.getUserMedia
-        ) {
-          alert(
-            "Seu navegador não suporta as APIs necessárias para trocar de câmera e controlar zoom."
-          );
-          return;
-        }
-        init();
-      });
-    </script>
-  </body>
+      init();
+    });
+  </script>
+</body>
 </html>
